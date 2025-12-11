@@ -36,23 +36,27 @@ export function CreateTicketForm({ isAdmin = false, onSuccess }: CreateTicketFor
       return;
     }
 
-    if (isAdmin && !selectedDepartment) {
+    // Both admin and department users need to select a department
+    if (!selectedDepartment) {
       toast.error('Seleccione un departamento');
       return;
     }
 
-    const dept = isAdmin 
-      ? departments.find(d => d.id.toString() === selectedDepartment)
-      : { id: user!.id, name: user!.department_name };
+    const dept = departments.find(d => d.id.toString() === selectedDepartment);
+
+    if (!dept) {
+      toast.error('Departamento no válido');
+      return;
+    }
 
     addTicket({
-      user_id: dept!.id,
+      user_id: dept.id,
       title,
       description,
       priority,
       category,
       status: 'Abierto',
-      department_name: dept!.name
+      department_name: dept.name
     });
 
     toast.success('Ticket creado exitosamente');
@@ -83,23 +87,21 @@ export function CreateTicketForm({ isAdmin = false, onSuccess }: CreateTicketFor
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-5">
-          {isAdmin && (
-            <div className="space-y-2">
-              <Label htmlFor="department">Departamento *</Label>
-              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione un departamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="department">Departamento *</Label>
+            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccione su departamento" />
+              </SelectTrigger>
+              <SelectContent>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.id} value={dept.id.toString()}>
+                    {dept.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="title">Título del problema *</Label>

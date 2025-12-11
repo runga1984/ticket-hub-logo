@@ -8,7 +8,10 @@ interface DataContextType {
   settings: AppSettings;
   addTicket: (ticket: Omit<Ticket, 'id' | 'created_at' | 'updated_at'>) => void;
   updateTicket: (id: number, updates: Partial<Ticket>) => void;
+  deleteTicket: (id: number) => void;
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'created_at'>) => void;
+  updateInventoryItem: (id: number, updates: Partial<InventoryItem>) => void;
+  deleteInventoryItem: (id: number) => void;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   getStats: () => DashboardStats;
   getDepartments: () => { id: number; name: string }[];
@@ -114,6 +117,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     ));
   };
 
+  const deleteTicket = (id: number) => {
+    setTickets(prev => prev.filter(t => t.id !== id));
+  };
+
   const addInventoryItem = (item: Omit<InventoryItem, 'id' | 'created_at'>) => {
     const newItem: InventoryItem = {
       ...item,
@@ -121,6 +128,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       created_at: new Date().toISOString()
     };
     setInventory(prev => [...prev, newItem]);
+  };
+
+  const updateInventoryItem = (id: number, updates: Partial<InventoryItem>) => {
+    setInventory(prev => prev.map(i => 
+      i.id === id ? { ...i, ...updates } : i
+    ));
+  };
+
+  const deleteInventoryItem = (id: number) => {
+    setInventory(prev => prev.filter(i => i.id !== id));
   };
 
   const updateSettings = (newSettings: Partial<AppSettings>) => {
@@ -145,8 +162,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       inventory, 
       settings, 
       addTicket, 
-      updateTicket, 
-      addInventoryItem, 
+      updateTicket,
+      deleteTicket,
+      addInventoryItem,
+      updateInventoryItem,
+      deleteInventoryItem,
       updateSettings, 
       getStats,
       getDepartments 
