@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ticket, TicketStatus } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -21,8 +21,15 @@ interface TicketDetailDialogProps {
 export function TicketDetailDialog({ ticket, open, onOpenChange }: TicketDetailDialogProps) {
   const { user } = useAuth();
   const { updateTicket } = useData();
-  const [status, setStatus] = useState<TicketStatus>(ticket?.status || 'Abierto');
-  const [response, setResponse] = useState(ticket?.admin_response || '');
+  const [status, setStatus] = useState<TicketStatus>('Abierto');
+  const [response, setResponse] = useState('');
+
+  useEffect(() => {
+    if (ticket) {
+      setStatus(ticket.status);
+      setResponse(ticket.admin_response || '');
+    }
+  }, [ticket]);
 
   if (!ticket) return null;
 

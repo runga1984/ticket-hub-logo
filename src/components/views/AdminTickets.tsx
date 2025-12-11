@@ -8,15 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Filter } from 'lucide-react';
+import { Search, Plus, Filter, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 export function AdminTickets() {
-  const { tickets } = useData();
+  const { tickets, deleteTicket } = useData();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = 
@@ -32,6 +35,14 @@ export function AdminTickets() {
   const openTickets = filteredTickets.filter(t => t.status === 'Abierto');
   const progressTickets = filteredTickets.filter(t => t.status === 'En Progreso');
   const resolvedTickets = filteredTickets.filter(t => t.status === 'Resuelto');
+
+  const handleDeleteTicket = () => {
+    if (ticketToDelete) {
+      deleteTicket(ticketToDelete.id);
+      toast.success('Ticket eliminado exitosamente');
+      setTicketToDelete(null);
+    }
+  };
 
   return (
     <div className="space-y-6 fade-in">
@@ -95,16 +106,16 @@ export function AdminTickets() {
         </TabsList>
 
         <TabsContent value="all" className="mt-6">
-          <TicketGrid tickets={filteredTickets} onSelect={setSelectedTicket} />
+          <TicketGrid tickets={filteredTickets} onSelect={setSelectedTicket} onDelete={setTicketToDelete} />
         </TabsContent>
         <TabsContent value="open" className="mt-6">
-          <TicketGrid tickets={openTickets} onSelect={setSelectedTicket} />
+          <TicketGrid tickets={openTickets} onSelect={setSelectedTicket} onDelete={setTicketToDelete} />
         </TabsContent>
         <TabsContent value="progress" className="mt-6">
-          <TicketGrid tickets={progressTickets} onSelect={setSelectedTicket} />
+          <TicketGrid tickets={progressTickets} onSelect={setSelectedTicket} onDelete={setTicketToDelete} />
         </TabsContent>
         <TabsContent value="resolved" className="mt-6">
-          <TicketGrid tickets={resolvedTickets} onSelect={setSelectedTicket} />
+          <TicketGrid tickets={resolvedTickets} onSelect={setSelectedTicket} onDelete={setTicketToDelete} />
         </TabsContent>
       </Tabs>
 
@@ -113,11 +124,28 @@ export function AdminTickets() {
         open={!!selectedTicket}
         onOpenChange={(open) => !open && setSelectedTicket(null)}
       />
+
+      <AlertDialog open={!!ticketToDelete} onOpenChange={(open) => !open && setTicketToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar ticket?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El ticket "{ticketToDelete?.title}" será eliminado permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTicket} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function TicketGrid({ tickets, onSelect }: { tickets: Ticket[]; onSelect: (t: Ticket) => void }) {
+function TicketGrid({ tickets, onSelect, onDelete }: { tickets: Ticket[]; onSelect: (t: Ticket) => void; onDelete: (t: Ticket) => void }) {
   if (tickets.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -129,12 +157,24 @@ function TicketGrid({ tickets, onSelect }: { tickets: Ticket[]; onSelect: (t: Ti
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {tickets.map((ticket) => (
-        <TicketCard 
-          key={ticket.id} 
-          ticket={ticket} 
-          onClick={() => onSelect(ticket)}
-          showDepartment={true}
-        />
+        <div key={ticket.id} className="relative group">
+          <TicketCard 
+            ticket={ticket} 
+            onClick={() => onSelect(ticket)}
+            showDepartment={true}
+          />
+          <Button
+            variant="destructive"
+            size="icon"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(ticket);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       ))}
     </div>
   );
